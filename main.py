@@ -32,13 +32,26 @@ def new_post():
 def newpost():
         blog_name = request.form['blog']
         body = request.form['body']
-        new_blog = Blog(blog_name, body)
-        db.session.add(new_blog)
-        db.session.commit()
 
-        blogs = Blog.query.all()
+        if len(blog_name) == 0:
+            name_error = "Title is required"
+        else:
+            name_error = ""
 
-        return render_template('blog.html', blogs=blogs)
+        if len(body) == 0:
+            body_error = "Content is required"
+        else:
+            body_error = ""
+
+        if not name_error and not body_error:
+            new_blog = Blog(blog_name, body)
+            db.session.add(new_blog)
+            db.session.commit()
+            blogs = Blog.query.all()
+            return render_template('blog.html', blogs=blogs)
+
+        else:
+            return render_template('newpost.html', blog=blog_name, name_error=name_error, body=body, body_error=body_error)
 
 
 @app.route('/blog')
