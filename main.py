@@ -13,8 +13,9 @@ class Blog(db.Model):
     name = db.Column(db.String(120))
     body = db.Column(db.String(1000))
 
-    def __init__(self, name):
+    def __init__(self, name, body):
         self.name = name
+        self.body = body
     
 
 
@@ -31,11 +32,13 @@ def new_post():
 def newpost():
         blog_name = request.form['blog']
         body = request.form['body']
-        new_blog = Blog(blog_name)
+        new_blog = Blog(blog_name, body)
         db.session.add(new_blog)
         db.session.commit()
 
-        return render_template('blog.html', name=name, body=body)
+        blogs = Blog.query.all()
+
+        return render_template('blog.html', blogs=blogs)
 
 
 @app.route('/blog')
