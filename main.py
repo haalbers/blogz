@@ -60,5 +60,12 @@ def index():
     return render_template('blog.html', blogs=blogs)
 
 
+@app.route('/blog?id={{id}}')
+def individual_blog():
+    blog = request.args.get('id')
+    return render_template('individual.html', blog=blog)
+
+
+
 if __name__ == '__main__':
     app.run()
