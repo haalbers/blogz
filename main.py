@@ -6,7 +6,7 @@ app.config['DEBUG'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://blogz:blogz@localhost:8889/blogz'
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
-
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RU'
 
 class Blog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -35,26 +35,45 @@ def homepage():
     return redirect('/blog')
 
 
-@app.route('/login', methods=['POST', 'GET'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
+        if not user.username:
+            flash('Username does not exist')
+            return redirect('/signup')
+        if password != user.password:
+            flash("Incorrect password")
+            return render_template('login.html')
+        else:
+            flash('Welcome back!')
+            session['username'] = username
+            return redirect('/newpost')
+"""        if user.password != password:
+            flash('Password is not correct')
+            return render_template('login.html', username=username)
         if user and user.password == password:
             session['username'] = username
             flash("Welcome back!")
-            return redirect('/newpost')
-        if not user:
-            flash('Username does not exist')
-            return redirect('signup.html')
-        else:
-            flash('Password does not exist')
+            return redirect('/newpost')"""
 
-    return render_template('login.html')
+ 
 
-@app.route('/signup', methods=['POST', 'GET'])
+@app.route("/logout", methods=['POST'])
+def logout():
+    del session['username']
+    return redirect("/")
+
+@app.route('/signup', methods=['GET', 'POST'])
 def register():
+    if request.method == "GET":
+        return render_template('signup.html')
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -62,21 +81,25 @@ def register():
 
         if len(username) > 120 or len(username) < 3:
             flash("Username must be between 3 and 120 characters")
+            return render_template('signup.html')
         if len(password) > 120 or len(password) < 3:
             flash("Password must be between 3 and 120 characters")
+            return render_template('signup.html', username=username)
         if password != verify:
             flash("Passwords must match")
+            return render_template('signup.html')
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             flash("User already exists")
+            return render_template('signup.html')
         else:
             new_user = User(username, password)
             db.session.add(new_user)
             db.session.commit()
             session['username'] = username
+            flash("Welcome!")
             return redirect('/newpost')
-    if request.method == "GET":
-        return render_template('signup.html')
+
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def new_post():
@@ -86,6 +109,7 @@ def new_post():
     if request.method == 'POST':
         blog_name = request.form['blog']
         body = request.form['body']
+        owner = User.query.filter_by(username=session['user']).first()
 
         if len(blog_name) == 0:
             name_error = "Title is required"
