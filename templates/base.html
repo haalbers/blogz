@@ -1,14 +1,31 @@
 <!doctype html>
 <html style="font-family:arial">
     <head>
+        <title>{{title}}</title>
+        <style>
+            .error {
+                color: red;
+            }
+        </style>
         <nav>
             <a href="/blog">All Blog Posts</a> |
             <a href="/newpost">Make a New Post</a> |
+            <a href="/signup">Create Account</a> |
+            <a href='/logout'>Logout</a>
         </nav>
         <title>{{title}}</title>
     </head>
     <body>
-        {% block content %}
-        {% endblock %}        
+    {% with messages = get_flashed_messages(with_categories=True) %}
+            <ul>
+            {% for category,message in messages %}
+                <li class="{{category}}">{{message}}</li>
+            {% endfor %}
+            </ul>
+    {% endwith %}
+
+    {% block content %}
+    {% endblock %}        
     </body>
 </html>
+
