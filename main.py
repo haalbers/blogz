@@ -29,6 +29,11 @@ class User(db.Model):
         self.username = username
         self.password = password
 
+@app.before_request
+def require_login():
+    allowed_routes = ['login', 'homepage', 'index', 'signup']
+    if request.endpoint not in allowed_routes and 'username' not in session:
+        return redirect('/login')
 
 @app.route('/')
 def homepage():
@@ -44,27 +49,22 @@ def login():
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
-        if not user.username:
+        if user and user.password == password:
+            session['username'] = username
+            return redirect('/newpost')
+        if not user:
             flash('Username does not exist')
             return redirect('/signup')
-        if password != user.password:
+        if user.password != password:
             flash("Incorrect password")
             return render_template('login.html')
         else:
-            flash('Welcome back!')
-            session['username'] = username
-            return redirect('/newpost')
-"""        if user.password != password:
-            flash('Password is not correct')
-            return render_template('login.html', username=username)
-        if user and user.password == password:
-            session['username'] = username
-            flash("Welcome back!")
-            return redirect('/newpost')"""
+            flash("Try again")
+            return render_template('/login')
 
  
 
-@app.route("/logout", methods=['POST'])
+@app.route("/logout", methods=['GET', 'POST'])
 def logout():
     del session['username']
     return redirect("/")
@@ -96,7 +96,7 @@ def register():
             new_user = User(username, password)
             db.session.add(new_user)
             db.session.commit()
-            session['username'] = username
+            session['username'] = new_user.username
             flash("Welcome!")
             return redirect('/newpost')
 
@@ -109,7 +109,7 @@ def new_post():
     if request.method == 'POST':
         blog_name = request.form['blog']
         body = request.form['body']
-        owner = User.query.filter_by(username=session['user']).first()
+        owner = User.query.filter_by(username=session['username']).first()
 
         if len(blog_name) == 0:
             name_error = "Title is required"
@@ -122,7 +122,7 @@ def new_post():
             body_error = ""
 
         if not name_error and not body_error:
-            new_blog = Blog(blog_name, body)
+            new_blog = Blog(blog_name, body, owner)
             db.session.add(new_blog)
             db.session.commit()
             blog_id = str(new_blog.id)
