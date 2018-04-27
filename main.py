@@ -37,7 +37,8 @@ def require_login():
 
 @app.route('/')
 def homepage():
-    return redirect('/blog')
+    users = User.query.all()
+    return render_template('index.html', users=users)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -138,6 +139,8 @@ def index():
         blog_id = request.args.get('id')
         blog = Blog.query.get(blog_id)
         return render_template('individual.html', blog=blog)
+    if request.args.get('user'):
+        owner = request.args.get('')
         
     blogs = Blog.query.all()
     return render_template('blog.html', blogs=blogs)
