@@ -138,9 +138,13 @@ def index():
     if request.args.get('id'):
         blog_id = request.args.get('id')
         blog = Blog.query.get(blog_id)
+        #owner_id = Blog.query.get(owner_id)
+        #owner = User.query.filter_by(id=owner_id).first()
         return render_template('individual.html', blog=blog)
     if request.args.get('user'):
-        owner = request.args.get('')
+        owner_id = request.args.get('user')
+        blogs = Blog.query.filter_by(owner_id=owner_id).all()
+        return render_template('author.html', blogs=blogs)
         
     blogs = Blog.query.all()
     return render_template('blog.html', blogs=blogs)
